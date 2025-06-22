@@ -6,7 +6,7 @@
   "test": "echo \"Error: no test specified\" && exit 1",
   "migrate": "npx prisma migrate dev",
   "generate": "npx prisma generate",
-  "postinstall": "npx puppeteer browsers install chrome",
+  "postinstall": "npx puppeteer browsers install chromium",
   "build": "tsc",
   "start": "node build/server/server.js",
   "dev": "tsc-watch --onSuccess  \" npm start\"",
