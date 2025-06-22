@@ -14,6 +14,7 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 const app = express();
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 // Enable CORS
 app.use(cors({
@@ -81,20 +82,68 @@ app.post("/upload-parse-resume", upload.single("file"), async (req, res) => {
     const data = await pdfParse(buffer);
 
     const prompt = `
-      You are an expert at analyzing resumes. Take the following raw resume data and clean it into a structured JSON format with the following sections:
-      - Name
-      - Education (list of degrees and schools)
-      - Experience (list of jobs with role, company, duration, and key points)
-      - Projects (list of projects with technologies and short descriptions)
-      - Skills (with tags like programmingLanguages, frameworksAndTools, databases , areasOfInterest)
-      - Achievements (list of accomplishments)
-      - Positions of Responsibility (list of roles like team lead, club positions, etc.)
-      
-      Raw Resume Data:
-      """${data.text}"""
-      
-      Return only JSON format, no extra text, no explanations.
-    `;
+You are an expert at structuring resumes. Take the following raw resume text and return a clean, structured JSON object matching the format described below.
+
+Return ONLY valid JSON — no explanations, markdown, or extra text.
+
+Ensure all fields exist — even if they are empty (use null or empty arrays). Include both capitalized and lowercase versions of keys where specified.
+
+### JSON Format to Return:
+
+{
+  "Name": string,
+
+  "Education": [
+    {
+      "degree": string,
+      "details": string,
+      "duration": string,
+      "school": string
+    }
+  ],
+
+  "Experience": [
+    {
+      "title": string,
+      "company": string,
+      "duration": string,
+      "description": string,
+      "keyPoints": string[]
+    }
+  ],
+
+  "Projects": [
+    {
+      "name": string,
+      "description": string,
+      "technologies": string[],
+    }
+  ],
+
+  "Skills": {
+    "programmingLanguages": string[],
+    "frameworksAndTools": string[],
+    "databases": string[],
+    "areasOfInterest": string[]
+  },
+
+  "Achievements": string[],
+
+  "PositionsOfResponsibility": [
+    {
+      "title": string,
+      "role": string,
+      "organization": string,
+      "duration": string,
+      "description": string
+    }
+  ],
+}
+
+### Raw Resume Data:
+"""${data.text}"""
+`;
+
 
     const response = await callDeepSeek_for_parsing_resume(prompt);
 
@@ -110,6 +159,14 @@ app.post("/upload-parse-resume", upload.single("file"), async (req, res) => {
       console.error("JSON Parse Error from DeepSeek:", parseErr);
       return res.status(500).json({ error: "Failed to parse resume JSON from AI response." });
     }
+
+    const userExists = await prisma.user.findUnique({
+  where: { id: userId },
+});
+
+if (!userExists) {
+  return res.status(400).json({ error: "Invalid userId: User not found in database." });
+}
 
     // Save all info to DB
     const savedResume = await prisma.resume.create({
@@ -145,11 +202,14 @@ const callDeepSeek_for_parsing_resume = async (prompt: string): Promise<any> => 
       },
       body: JSON.stringify({
         model: "deepseek/deepseek-r1:free",
+        // model:"o3-mini",
         messages: [{ role: "user", content: prompt }],
+        // temperature:0.7
       }),
     });
 
     const data = await response.json();
+    console.log(data);
     return data.choices[0].message.content;
   } catch (error) {
     console.error("Error calling DeepSeek API:", error);
@@ -157,203 +217,6 @@ const callDeepSeek_for_parsing_resume = async (prompt: string): Promise<any> => 
   }
 };
 
-
-// generating the cover letter for the job description and the resume parsed via deepseek
-
-// yeh waala original hh bro
-// app.post("/cover_letter", upload.single("file"), async (req, res) => {
-//   try {
-//     if (!req.file) {
-//       return res.status(400).json({ error: "File is required!" });
-//     }
-
-//     const buffer = req.file.buffer;
-
-//     if (buffer) {
-//       const data = await pdfParse(buffer);
-//       const userId = req.body?.userId;
-//       const jobId = req.body?.jobId;
-
-//       const job_description = await prisma.job.findFirst({
-//         where: { id: jobId,userId:userId },
-//         select: { title: true, description: true, company: true,
-//           url:true, location: true },
-//       });
-//       const formattedDate = new Date().toLocaleDateString("en-GB", { 
-//         day: "numeric", 
-//         month: "long", 
-//         year: "numeric" 
-//       }).replace(/(\d+)(?=\s)/, (d) => {
-//         const day = Number(d); // Explicitly convert to number
-//         const suffix = ["st", "nd", "rd"][(day % 10) - 1] || "th";
-//         return `${day}${(day % 100 >= 11 && day % 100 <= 13) ? "th" : suffix}`; // Handle 11th, 12th, 13th
-//       });
-    
-      
-
-
-//       const prompt = `
-//         You are an expert in writing personalized, impactful cover letters. 
-
-// Using the raw resume data provided below, craft a compelling, tailored cover letter that highlights the candidate's relevant skills, experiences, and achievements. Ensure the cover letter is professional, engaging, and customized to the job description — no generic phrases or resume formatting.
-
-// Raw Resume Data:
-// """${data.text}"""
-
-// Job Data:
-// - Title: ${job_description?.title}
-// - Description: ${job_description?.description}
-// - Company: ${job_description?.company}
-// - Location: ${job_description?.location}
-
-// Write the cover letter for Date as : ${formattedDate}  in paragraph format with proper structure:
-// - Intro: Express excitement for the role and alignment with the company's mission.
-// - Experience: Connect past achievements and projects from the raw resume data to job requirements.
-// - Skills & Value: Highlight relevant technologies and how they align with the company's goals.
-// - Closing: Reinforce enthusiasm and request an interview.
-
-// Keep the tone professional yet enthusiastic, ensuring a clean, readable output and make it concise , don't provide any note just the cover-letter content.
-//       `;
-
-//       try {
-//         const response = await call_deepseek_for_cover_letter(prompt);
-      
-//         let cleanedResponse = response.trim();
-      
-//         // Remove markdown formatting and extra symbols
-//         cleanedResponse = cleanedResponse.replace(/```json|```|###|\*\*/g, "").trim();
-      
-//         // Split the response into lines
-//         const lines = cleanedResponse.split("\n");
-      
-//         // Format the top (header) and bottom (sign-off) with spacing
-//         const header = lines.slice(0, 7).join("\n"); // First 7 lines as header, spaced nicely
-//         const body = lines.slice(7, -2).join(" "); // Body stays tight, combining into paragraphs
-//         const footer = lines.slice(-2).join("\n"); // Last 2 lines (sign-off) spaced nicely
-      
-//         const formattedResponse = `${header}\n\n${body}\n\n${footer}`;
-//        const cover_letter= await prisma.coverLetter.create({
-//           data:{
-//             userId:req.body.userId,
-//             data:formattedResponse,
-//             fileUrl:job_description?.url
-//           }
-//         })
-//         return res.json({ coverLetter: formattedResponse ,cover_letter });
-//       } catch (error) {
-//         console.error("Failed to process DeepSeek response:", error);
-//         return res.status(500).json({ error: "Failed to format cover letter" });
-//       }
-      
-      
-//     } else {
-//       res.status(400).json({ message: "No file uploaded" });
-//     }
-//   } catch (err) {
-//     console.error("Parse route error:", err);
-//     return res.status(500).json({ error: "Internal server error" });
-//   }
-// });
-
-// app.post("/cover_letter", upload.single("file"), async (req, res) => {
-//   try {
-//     if (!req.file) return res.status(400).json({ error: "File is required!" });
-
-//     const buffer = req.file.buffer;
-//     const data = await pdfParse(buffer);
-//     const userId = req.body?.userId;
-//     const userTemplate = req.body?.template;
-
-//     const job_description = await prisma.job.findMany({
-//       where: { userId },
-//       select: { title: true, description: true, company: true, url: true, location: true },
-//     });
-
-//     const formattedDate = new Date().toLocaleDateString("en-GB", {
-//       day: "numeric", month: "long", year: "numeric"
-//     }).replace(/(\d+)(?=\s)/, (d) => {
-//       const day = Number(d);
-//       const suffix = ["st", "nd", "rd"][(day % 10) - 1] || "th";
-//       return `${day}${(day % 100 >= 11 && day % 100 <= 13) ? "th" : suffix}`;
-//     });
-
-//     const defaultPrompt = `
-// You are an expert in writing personalized, impactful cover letters.
-
-// Using the resume and job data below, craft a concise and compelling cover letter.
-
-// Resume:
-// """${data.text}"""
-
-// Job:
-// - Title: ${job_description[0].title}
-// - Description: ${job_description[0].description}
-// - Company: ${job_description[0].company}
-// - Location: ${job_description[0].location}
-// - Date: ${formattedDate}
-
-// Return only the cover letter in paragraph format.
-//     `;
-
-//     const userPrompt = userTemplate
-//       ? `
-// You are an expert in writing cover letters.
-
-// Fill in this user-provided template using resume and job data.
-
-// Template:
-// """${userTemplate}"""
-
-// Resume:
-// """${data.text}"""
-
-// Job:
-// - Title: ${job_description[0].title}
-// - Description: ${job_description[0].description}
-// - Company: ${job_description[0].company}
-// - Location: ${job_description[0].location}
-// - Date: ${formattedDate}
-
-// Return the completed cover letter only, no markdown or extra symbols.
-//       `
-//       : null;
-
-//     let finalContent = "";
-//     try {
-//       if (userPrompt) {
-//         const userResponse = await call_deepseek_for_cover_letter(userPrompt);
-//         const cleaned = userResponse.replace(/```json|```|###|\*\*/g, "").trim();
-//         if (!cleaned || cleaned.length < 100) throw new Error("Invalid user template response");
-//         finalContent = cleaned;
-//       } else {
-//         throw new Error("No user template provided");
-//       }
-//     } catch (error:unknown) {
-//       if (error instanceof Error) {
-//       console.warn("⚠ Falling back to default cover letter prompt:", error.message);
-//       const fallbackResponse = await call_deepseek_for_cover_letter(defaultPrompt);
-//       finalContent = fallbackResponse.replace(/```json|```|###|\*\*/g, "").trim();
-//     }
-//     else {
-//     console.error("Unknown error generating learning roadmap:", error);
-//   }
-//   throw new Error("Failed to generate learning roadmap");
-// }
-
-//     const cover_letter = await prisma.coverLetter.create({
-//       data: {
-//         userId,
-//         data: finalContent,
-//         fileUrl: job_description[0].url,
-//       },
-//     });
-
-//     return res.json({ coverLetter: finalContent, cover_letter });
-//   } catch (err) {
-//     console.error("Cover letter error:", err);
-//     return res.status(500).json({ error: "Internal server error" });
-//   }
-// });
 
 
 app.post("/cover_letter", async (req, res) => {
@@ -457,8 +320,10 @@ const call_deepseek_for_cover_letter = async (prompt:string):Promise<any> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        // model: "openai/o3-pro",
         model: "deepseek/deepseek-r1:free",
         messages: [{ role: "user", content: prompt }],
+        // temperature:0.7
       }),
     });
 
@@ -470,156 +335,9 @@ const call_deepseek_for_cover_letter = async (prompt:string):Promise<any> => {
   }
 };
 
-// app.post("/cold_email", upload.single("file"), async (req, res) => {
-//   try {
-//     if (!req.file) return res.status(400).json({ error: "File is required!" });
-
-//     const buffer = req.file.buffer;
-//     const data = await pdfParse(buffer);
-//     const userId = req.body?.userId;
-//     const userTemplate = req.body?.template;
-
-//     const defaultPrompt = `
-// You are an expert in writing compelling cold emails.
-
-// Craft a cold email using the resume data below with this structure:
-// - Subject
-// - Introduction
-// - Experience
-// - Call to Action
-// - Closing
-
-// Resume:
-// """${data.text}"""
-
-// Return only the email body text.
-//     `;
-
-//     const userPrompt = userTemplate
-//       ? `
-// You are an expert in writing cold outreach emails.
-
-// Fill the following user-provided cold email template using the resume content.
-
-// Template:
-// """${userTemplate}"""
-
-// Resume:
-// """${data.text}"""
-
-// Return only the final email content. No markdown or extra formatting.
-//       `
-//       : null;
-
-//     let finalContent = "";
-//     try {
-//       if (userPrompt) {
-//         const userResponse = await call_deepseek_for_cold_email(userPrompt);
-//         const cleaned = userResponse.replace(/```json|```|###|\*\*/g, "").trim();
-//         if (!cleaned || cleaned.length < 50) throw new Error("Invalid user template email response");
-//         finalContent = cleaned;
-//       } else {
-//         throw new Error("No user template provided");
-//       }
-//     } catch (error:unknown) {
-//       if (error instanceof Error) {
-//       console.warn("⚠ Falling back to default cold email prompt:", error.message);
-//       const fallbackResponse = await call_deepseek_for_cold_email(defaultPrompt);
-//       finalContent = fallbackResponse.replace(/```json|```|###|\*\*/g, "").trim();
-//     }
-//     else {
-//     console.error("Unknown error generating learning roadmap:", error);
-//   }
-// }
-
-//     return res.json({ coldEmailTemplate: finalContent });
-//   } catch (err) {
-//     console.error("Cold email route error:", err);
-//     return res.status(500).json({ error: "Internal server error" });
-//   }
-// });
 
 
-// origianl waala hh
-// app.post("/cold_email", upload.single("file"), async (req, res) => {
-//   try {
-//     if (!req.file) {
-//       return res.status(400).json({ error: "File is required!" });
-//     }
 
-//     const buffer = req.file.buffer;
-//     if (buffer) {
-//       const data = await pdfParse(buffer);
-//       const userId = req.body?.userId;
-//       const jobId = req.body?.jobId;
-
-//       const job_description = await prisma.job.findFirst({
-//         where: { id: jobId,userId:userId },
-//         select: { title: true, description: true, company: true,
-//           url:true, location: true },
-//       });
-      
-
-//       // const prompt = `
-//       //   You are an expert in writing compelling cold emails. 
-
-//       //   Using the raw resume data provided below, craft a cold email template aimed at introducing the candidate to a potential employer. The email should highlight the candidate's relevant skills, experience, and express interest in discussing opportunities. The tone should be polite, professional, and engaging.
-
-//       //   Raw Resume Data:
-//       //   """${data.text}"""
-
-//       //   Write a cold email template, with the following structure:
-//       //   - Subject: A catchy subject line.
-//       //   - Introduction: A brief introduction of the candidate.
-//       //   - Experience: Relevant experience and skills.
-//       //   - Call to action: Invite the recipient for a meeting or a follow-up conversation.
-//       //   - Closing: Polite, professional closing.
-
-//       //   Keep the email concise, personalized, and engaging.
-//       // `;
-// const prompt = `
-// You are an expert in writing professional, personalized cold emails.
-
-// Using the candidate's resume data and the job opportunity details below, write a concise and compelling cold email introducing the candidate to the company. The tone should be professional, enthusiastic, and focused on aligning the candidate's experience with the job opportunity.
-
-// Resume:
-// """${data.text}"""
-
-// Job Opportunity:
-// - Title: ${job_description?.title}
-// - Description: ${job_description?.description}
-// - Company: ${job_description?.company}
-// - Location: ${job_description?.location}
-
-// Structure the cold email like this:
-// - Subject: A catchy and relevant subject line.
-// - Introduction: A brief self-introduction and why they’re reaching out to the company.
-// - Alignment: Clearly connect the candidate’s relevant experience, skills, and interests to the specific job role.
-// - Call to Action: Express interest in discussing the opportunity and request a follow-up or meeting.
-// - Closing: Professional closing with gratitude.
-
-// Return only the cold email body text with no extra notes or markdown formatting.
-// `;
-//       const response = await call_deepseek_for_cold_email(prompt);
-
-//       let cleanedResponse = response.trim();
-//       cleanedResponse = cleanedResponse.replace(/```json|```|###|\*\*/g, "").trim();
-//         const cold_email= await prisma.coldEmail.create({
-//           data:{
-//             userId:req.body.userId,
-//             data:cleanedResponse,
-//             fileUrl:job_description?.url
-//           }
-//         })
-//       return res.json({ coldEmailTemplate: cleanedResponse });
-//     } else {
-//       return res.status(400).json({ message: "No file uploaded" });
-//     }
-//   } catch (err) {
-//     console.error("Cold email route error:", err);
-//     return res.status(500).json({ error: "Internal server error" });
-//   }
-// });
 
 // DeepSeek API call for cold email
 
@@ -705,11 +423,15 @@ const call_deepseek_for_cold_email = async (prompt: string): Promise<any> => {
       method: "POST",
       headers: {
         Authorization: `Bearer ${Deepseek}`,
+         "HTTP-Referer": "",
+        "X-Title": "",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        // model: "gpt-4",
         model: "deepseek/deepseek-r1:free",
         messages: [{ role: "user", content: prompt }],
+        // temperature:0.7
       }),
     });
 

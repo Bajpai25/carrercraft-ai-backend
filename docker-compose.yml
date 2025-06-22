@@ -10,3 +10,16 @@ services:
       POSTGRES_DB: AI-backend
     ports:
       - "5432:5432"
+
+  # server:
+  #   container_name: server_container
+  #   build: .
+  #   ports:
+  #     - "8000:8000"
+  #   restart: always
+  #   depends_on:
+  #     - db
+  #   entrypoint: [ "/app/entrypoint.sh" ]
+  #   dns:
+  #     - 8.8.8.8
+  #     - 1.1.1.1

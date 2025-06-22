@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resumeschema = void 0;
 exports.resumeschema = `#graphql
-scalar Upload
+# scalar Upload
 scalar JSON
 
 type Resume{
@@ -18,8 +18,8 @@ type Query{
 }
 
 
-type Mutation{
-    uploadResume(filePDF:Upload!,userId:String!):Resume!
-}
+# type Mutation{
+#     uploadResume(filePDF:Upload!,userId:String!):Resume!
+# }
 
 `;
