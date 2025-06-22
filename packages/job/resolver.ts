@@ -33,7 +33,13 @@ export const jobResolver = {
     // scrape the job data
       const browser = await puppeteer.launch({
         headless: true,
-        args: ["--disable-blink-features=AutomationControlled", "--start-maximized"],
+        executablePath: await puppeteer.executablePath(),
+        args: [
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--disable-blink-features=AutomationControlled",
+    "--start-maximized"
+  ],
       });
     
       // for scraping the greenhouse job data
