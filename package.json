@@ -6,7 +6,6 @@
   "test": "echo \"Error: no test specified\" && exit 1",
   "migrate": "npx prisma migrate dev",
   "generate": "npx prisma generate",
-  "postinstall": "npx puppeteer browsers install chromium",
   "build": "tsc",
   "start": "node build/server/server.js",
   "dev": "tsc-watch --onSuccess  \" npm start\"",
@@ -32,9 +31,9 @@
     "nodemon": "^3.1.9",
     "pdf-parse": "^1.1.1",
     "pg": "^8.13.3",
-    "puppeteer": "^21.3.8",
-  "puppeteer-extra": "^3.3.4",
-  "puppeteer-extra-plugin-stealth": "^2.11.1"
+    "puppeteer": "^24.4.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^5.0.5",

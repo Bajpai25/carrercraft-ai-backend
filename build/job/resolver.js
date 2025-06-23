@@ -16,6 +16,7 @@ exports.jobResolver = void 0;
 const client_1 = require("@prisma/client");
 const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
 const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
+const puppeteer_1 = require("puppeteer");
 puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_stealth_1.default)());
 const prisma = new client_1.PrismaClient();
 exports.jobResolver = {
@@ -42,7 +43,13 @@ exports.jobResolver = {
             // scrape the job data
             const browser = yield puppeteer_extra_1.default.launch({
                 headless: true,
-                args: ["--disable-blink-features=AutomationControlled", "--start-maximized"],
+                executablePath: (0, puppeteer_1.executablePath)(),
+                args: [
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                    "--disable-blink-features=AutomationControlled",
+                    "--start-maximized"
+                ],
             });
             // for scraping the greenhouse job data
             // if(type==="greenhouse"){
