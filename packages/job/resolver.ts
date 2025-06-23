@@ -1,8 +1,8 @@
 import { PrismaClient } from "@prisma/client";
-import { get } from "http";
+// import { get } from "http";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import { executablePath } from "puppeteer";
+// import { executablePath } from "puppeteer";
 
 puppeteer.use(StealthPlugin());
 const prisma = new PrismaClient();
@@ -34,7 +34,7 @@ export const jobResolver = {
     // scrape the job data
       const browser = await puppeteer.launch({
         headless: true,
-        executablePath: executablePath(),
+        // executablePath: executablePath(),
         args: [
     "--no-sandbox",
     "--disable-setuid-sandbox",
