@@ -18,23 +18,21 @@
 # # # Command to start your server
 # # CMD [ "npm run dev" ]
 
-FROM mcr.microsoft.com/playwright:v1.43.1-jammy
+# Use the correct version of Playwright that matches your installed version
+FROM mcr.microsoft.com/playwright:v1.53.1-jammy
 
-# Set working directory
 WORKDIR /app
 
 # Install dependencies
 COPY package*.json ./
 RUN npm ci
 
-# Copy the rest of your project
+# Copy the rest of the project
 COPY . .
 
 # Make the entrypoint script executable
 RUN chmod +x entrypoint.sh
 
-# Expose port your app runs on
 EXPOSE 8000
 
-# Run entrypoint script
 ENTRYPOINT ["./entrypoint.sh"]
