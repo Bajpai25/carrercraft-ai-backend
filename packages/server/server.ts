@@ -81,69 +81,21 @@ app.post("/upload-parse-resume", upload.single("file"), async (req, res) => {
     // Parse PDF
     const data = await pdfParse(buffer);
 
-    const prompt = `
-You are an expert at structuring resumes. Take the following raw resume text and return a clean, structured JSON object matching the format described below.
-
-Return ONLY valid JSON — no explanations, markdown, or extra text.
-
-Ensure all fields exist — even if they are empty (use null or empty arrays). Include both capitalized and lowercase versions of keys where specified.
-
-### JSON Format to Return:
-
+const prompt = `
+Extract structured JSON from the resume text below.
+Only output JSON. No comments or text. Use "" for missing strings and [] for missing lists. No nulls.
+Format:
 {
-  "Name": string,
-
-  "Education": [
-    {
-      "degree": string,
-      "details": string,
-      "duration": string,
-      "school": string
-    }
-  ],
-
-  "Experience": [
-    {
-      "title": string,
-      "company": string,
-      "duration": string,
-      "description": string,
-      "keyPoints": string[]
-    }
-  ],
-
-  "Projects": [
-    {
-      "name": string,
-      "description": string,
-      "technologies": string[],
-    }
-  ],
-
+  "Name": "",
+  "Education": [{ "degree": "", "details": "", "duration": "", "school": "" }],
+  "Experience": [{ "title": "", "company": "", "duration": "", "description": "", "keyPoints": [] }],
+  "Projects": [{ "name": "", "description": "", "technologies": [] }],
   "Skills": {
-    "programmingLanguages": string[],
-    "frameworksAndTools": string[],
-    "databases": string[],
-    "areasOfInterest": string[]
-  },
-
-  "Achievements": string[],
-
-  "PositionsOfResponsibility": [
-    {
-      "title": string,
-      "role": string,
-      "organization": string,
-      "duration": string,
-      "description": string
-    }
-  ],
-}
-
-### Raw Resume Data:
-"""${data.text}"""
+    "programmingLanguages": [],"frameworksAndTools": [],"databases": [],"areasOfInterest": []},
+  "Achievements": [],
+  "PositionsOfResponsibility": [{ "title": "", "role": "", "organization": "", "duration": "", "description": "" }]}
+Resume:${data.text}
 `;
-
 
     const response = await callDeepSeek_for_parsing_resume(prompt);
 
