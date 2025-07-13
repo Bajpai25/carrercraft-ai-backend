@@ -1,46 +1,7 @@
 import { PrismaClient } from "@prisma/client";
-import dotenv from "dotenv";
+
 
 const prisma=new PrismaClient();
-
-// now cleaning the resume data by calling the deepseek function 
-// const Deepseek=process.env.DEEPSEEK_API_KEY;
-
-
-
-// type ResumeJSON = {
-//   name: string;
-//   skills: {
-//     programmingLanguages: string[];
-//     frameworksAndTools: string[];
-//     databases: string[];
-//     areasOfInterest: string[];
-//   };
-//   projects: {
-//     name: string;
-//     description: string;
-//     technologies: string[];
-//   }[];
-//   experience: {
-//     role: string;
-//     company: string;
-//     duration: string;
-//     location: string;
-//     keyPoints: string[];
-//   }[];
-//   education: {
-//     degree: string;
-//     school: string;
-//     details: string;
-//     duration: string;
-//   }[];
-//   achievements: string[];
-//   positionsOfResponsibility: {
-//     role: string;
-//     duration: string;
-//     organization: string;
-//   }[];
-// };
 
 export type ResumeJSON = {
   Name?: string;
@@ -128,69 +89,6 @@ export const callOpenAI_for_parsing_resume = async (prompt: string): Promise<str
 };
 
 
-// DeepSeek API call function
-// export const callDeepSeek_for_parsing_resume = async (prompt: string): Promise<any> => {
-//   try {
-//     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-//       method: "POST",
-//       headers: {
-//         Authorization: `Bearer ${Deepseek}`,
-//         "HTTP-Referer": "",
-//         "X-Title": "",
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         model: "deepseek/deepseek-r1:free",
-//         messages: [{ role: "user", content: prompt }],
-//       }),
-//     });
-
-//     const data = await response.json();
-//     return data.choices[0].message.content;
-//   } catch (error) {
-//     console.error("Error calling DeepSeek API:", error);
-//     throw new Error("Failed to fetch data from DeepSeek API");
-//   }
-// };
-
-// export function convertResumeJSONToText(json:ResumeJSON):string {
-//   const lines = [];
-
-//   lines.push(`Name: ${json.name}`);
-//   lines.push(`Skills: ${[
-//     ...json.skills.programmingLanguages,
-//     ...json.skills.frameworksAndTools,
-//     ...json.skills.databases,
-//   ].join(", ")}`);
-
-//   lines.push(`Areas of Interest: ${json.skills.areasOfInterest.join(", ")}`);
-
-//   lines.push("Projects:");
-//   json.projects.forEach(project => {
-//     lines.push(`- ${project.name}: ${project.description}. Technologies: ${project.technologies.join(", ")}`);
-//   });
-
-//   lines.push("Experience:");
-//   json.experience.forEach(exp => {
-//     lines.push(`- ${exp.role} at ${exp.company} (${exp.duration}, ${exp.location})`);
-//     exp.keyPoints.forEach(point => lines.push(`  • ${point}`));
-//   });
-
-//   lines.push("Education:");
-//   json.education.forEach(edu => {
-//     lines.push(`- ${edu.degree} at ${edu.school} (${edu.duration}) - ${edu.details}`);
-//   });
-
-//   lines.push("Achievements:");
-//   json.achievements.forEach(ach => lines.push(`- ${ach}`));
-
-//   lines.push("Positions of Responsibility:");
-//   json.positionsOfResponsibility.forEach(pos => {
-//     lines.push(`- ${pos.role} at ${pos.organization} (${pos.duration})`);
-//   });
-
-//   return lines.join("\n");
-// }
 export function convertResumeJSONToText(json: ResumeJSON): string {
   const lines: string[] = [];
 
@@ -281,7 +179,7 @@ export const atsresolver={
 
                 const prompt = `
 
-You are an ATS (Applicant Tracking System) resume analysis assistant.
+You are a professional industry level ATS (Applicant Tracking System) resume analysis assistant similar to top ATS checker websites like resumeworded and enhance CV.
 
 Your task is to carefully analyze the following resume text and return a comprehensive JSON output suitable for storing in a database. You must extract the following:
 

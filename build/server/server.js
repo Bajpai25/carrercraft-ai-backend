@@ -21,6 +21,8 @@ const cloudinary_1 = __importDefault(require("../cloudinary"));
 const client_1 = require("@prisma/client");
 const dotenv_1 = __importDefault(require("dotenv"));
 const puppeteer_1 = __importDefault(require("puppeteer"));
+// import { CLIENT_RENEG_LIMIT } from "tls";
+// import { CONNREFUSED } from "dns";
 const pdfParse = require("pdf-parse");
 dotenv_1.default.config();
 const prisma = new client_1.PrismaClient();
@@ -501,6 +503,140 @@ const findLearningResources = (skill) => __awaiter(void 0, void 0, void 0, funct
         throw new Error('Failed to fetch learning resources');
     }
 });
+// code to analyze the skill gap according to the job description and the resume
+const SkillGap = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
+    console.log(req.body);
+    const { userId, jobId, resumeId } = req.body; // or req.query or req.params
+    if (!userId || !jobId || !resumeId) {
+        return res.status(400).json({
+            message: "All fields are required: userId, jobId, resumeId."
+        });
+    }
+    const user = yield prisma.user.findUnique({ where: { id: userId } });
+    if (!user)
+        return res.status(404).json({ message: "User not found" });
+    const resume = yield prisma.resume.findUnique({ where: { id: resumeId } });
+    if (!resume)
+        return res.status(404).json({ message: "Resume not found" });
+    const job = yield prisma.job.findUnique({ where: { id: jobId } });
+    if (!job)
+        return res.status(404).json({ message: "Job description not found" });
+    const formattedResume = formatResume(resume.resume_data);
+    const prompt = `
+You are an advanced career coach and ATS (Applicant Tracking System) expert.
+
+You will be given:
+1. The text of a job description.
+2. The text of a candidate's resume.
+
+Your tasks:
+- Analyze the resume and job description carefully.
+- Identify the key skills, experiences, and qualifications required for the job.
+- Compare these with what is present in the resume.
+- Calculate an estimated percentage match score between the resume and the job description.
+- List clearly:
+   - Skills and qualifications that are a strong match (present in the resume).
+   - Skills and qualifications that are missing or weak (not clearly demonstrated).
+- Provide constructive feedback on what the candidate can improve in their resume to better match the job.
+- Be honest, specific, and actionable.
+
+Return your answer in this JSON format:
+{
+  "match_percentage": "<calculated percentage>",
+  "matching_skills": [ "Skill 1", "Skill 2", ... ],
+  "missing_skills": [ "Skill A", "Skill B", ... ],
+  "feedback": "<Your detailed feedback>"
+}
+
+Job Description:
+"""
+${job === null || job === void 0 ? void 0 : job.description}
+"""
+
+Resume:
+"""
+${formattedResume}
+"""
+`;
+    try {
+        const response = yield call_deepseek_for_skill_gap(prompt);
+        let cleanedResponse = response.trim();
+        // Remove any markdown formatting if present
+        if (cleanedResponse.startsWith("```")) {
+            cleanedResponse = cleanedResponse.replace(/```json|```/g, "").trim();
+        }
+        console.log(typeof (cleanedResponse), "this is the cleaned response");
+        const skill_response = JSON.parse(cleanedResponse);
+        const skill_data = yield prisma.skillAnalysis.create({
+            data: { userId: userId, jobId: jobId, resumeId: resumeId, match_percentage: (_a = skill_response.match_percentage) !== null && _a !== void 0 ? _a : "", matching_skills: (_b = skill_response.matching_skills) !== null && _b !== void 0 ? _b : [], missing_skills: (_c = skill_response.missing_skills) !== null && _c !== void 0 ? _c : [],
+                feedback: (_d = skill_response.feedback) !== null && _d !== void 0 ? _d : ""
+            },
+        });
+        console.log(skill_data);
+        return res.status(200).json({
+            message: skill_data
+        });
+    }
+    catch (error) {
+        console.error("Error getting the skill analysis from the AI model , Try again later!!", error);
+        return [];
+    }
+});
+function formatResume(resume) {
+    let output = `Name: ${resume.Name}\n\n`;
+    output += `Education:\n`;
+    resume.Education.forEach((edu) => {
+        output += `- ${edu.degree} from ${edu.school} (${edu.duration}), Details: ${edu.details}\n`;
+    });
+    output += `\nExperience:\n`;
+    resume.Experience.forEach((exp) => {
+        output += `- ${exp.title} at ${exp.company} (${exp.duration})\n`;
+        exp.keyPoints.forEach((point) => {
+            output += `   • ${point}\n`;
+        });
+    });
+    output += `\nProjects:\n`;
+    resume.Projects.forEach((proj) => {
+        output += `- ${proj.name}: ${proj.description}\n  Tech: ${proj.technologies.join(', ')}\n`;
+    });
+    output += `\nSkills:\n`;
+    output += `- Databases: ${resume.Skills.databases.join(', ')}\n`;
+    output += `- Areas of Interest: ${resume.Skills.areasOfInterest.join(', ')}\n`;
+    output += `- Frameworks/Tools: ${resume.Skills.frameworksAndTools.join(', ')}\n`;
+    output += `- Programming Languages: ${resume.Skills.programmingLanguages.join(', ')}\n`;
+    //  console.log(output)
+    return output;
+}
+const call_deepseek_for_skill_gap = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
+    try {
+        const response = yield fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${Deepseek}`,
+                "HTTP-Referer": "",
+                "X-Title": "",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                // model: "gpt-4",
+                model: "deepseek/deepseek-r1:free",
+                messages: [{ role: "user", content: prompt }],
+                // temperature:0.7
+            }),
+        });
+        const data = yield response.json();
+        return ((_c = (_b = (_a = data.choices) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.message) === null || _c === void 0 ? void 0 : _c.content) || "";
+    }
+    catch (error) {
+        console.error("Error calling DeepSeek API:", error);
+        return error.status(500).json({
+            message: "Failed to fetch data from DeepSeek API"
+        });
+    }
+});
+app.post("/skill_analysis", SkillGap);
 // ✅ Start Apollo GraphQL Server
 const init = () => __awaiter(void 0, void 0, void 0, function* () {
     const server = new apollo_server_express_1.ApolloServer({ typeDefs: combine_1.typeDefs, resolvers: combine_1.resolvers });

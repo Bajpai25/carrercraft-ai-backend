@@ -141,3 +141,16 @@ model ATSResultSkill {
   @@id([atsResultId, skillId])
   @@map("ats_result_skill")
 }
+
+model SkillAnalysis{
+  id     String  @id @default(uuid()) @unique
+  userId String 
+  jobId  String  
+  resumeId String 
+  match_percentage  String 
+  matching_skills String[]
+  missing_skills String[]  
+  feedback String  
+
+  @@map("skillanalysis")
+}

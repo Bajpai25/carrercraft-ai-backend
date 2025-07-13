@@ -7,6 +7,8 @@ import cloudinary from "../cloudinary";
 import { PrismaClient } from "@prisma/client";
 import dotenv from 'dotenv';
 import puppeteer from 'puppeteer';
+// import { CLIENT_RENEG_LIMIT } from "tls";
+// import { CONNREFUSED } from "dns";
 const pdfParse = require("pdf-parse");
 
 dotenv.config();
@@ -29,6 +31,12 @@ interface YouTubeVideoResult {
   title: string;
   link: string;
   description: string;
+}
+
+interface SkillGap{
+  userId:string;
+  resumeId:string;
+  jobId:string
 }
 
 // Enable JSON body parsing (for non-file requests)
@@ -574,6 +582,163 @@ const findLearningResources = async (skill: string): Promise<YouTubeVideoResult[
     throw new Error('Failed to fetch learning resources');
   }
 };
+
+
+// code to analyze the skill gap according to the job description and the resume
+
+
+
+
+const SkillGap = async (req: any, res: any) => {
+  console.log(req.body)
+  const { userId, jobId, resumeId } = req.body; // or req.query or req.params
+
+  if (!userId || !jobId || !resumeId) {
+    return res.status(400).json({
+      message: "All fields are required: userId, jobId, resumeId."
+    });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  const resume = await prisma.resume.findUnique({ where: { id: resumeId } });
+  if (!resume) return res.status(404).json({ message: "Resume not found" });
+  
+
+  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  if (!job) return res.status(404).json({ message: "Job description not found" });
+  const formattedResume = formatResume(resume.resume_data);
+
+   const prompt = `
+You are an advanced career coach and ATS (Applicant Tracking System) expert.
+
+You will be given:
+1. The text of a job description.
+2. The text of a candidate's resume.
+
+Your tasks:
+- Analyze the resume and job description carefully.
+- Identify the key skills, experiences, and qualifications required for the job.
+- Compare these with what is present in the resume.
+- Calculate an estimated percentage match score between the resume and the job description.
+- List clearly:
+   - Skills and qualifications that are a strong match (present in the resume).
+   - Skills and qualifications that are missing or weak (not clearly demonstrated).
+- Provide constructive feedback on what the candidate can improve in their resume to better match the job.
+- Be honest, specific, and actionable.
+
+Return your answer in this JSON format:
+{
+  "match_percentage": "<calculated percentage>",
+  "matching_skills": [ "Skill 1", "Skill 2", ... ],
+  "missing_skills": [ "Skill A", "Skill B", ... ],
+  "feedback": "<Your detailed feedback>"
+}
+
+Job Description:
+"""
+${job?.description}
+"""
+
+Resume:
+"""
+${formattedResume}
+"""
+`;
+
+  try {
+    const response = await call_deepseek_for_skill_gap(prompt);
+    let cleanedResponse = response.trim();
+    
+    // Remove any markdown formatting if present
+    if (cleanedResponse.startsWith("```")) {
+      cleanedResponse = cleanedResponse.replace(/```json|```/g, "").trim();
+    }
+    
+    console.log(typeof(cleanedResponse) , "this is the cleaned response")
+
+    const skill_response=JSON.parse(cleanedResponse)
+
+    const skill_data=await prisma.skillAnalysis.create({
+      data: {userId:userId , jobId:jobId , resumeId:resumeId ,  match_percentage:skill_response.match_percentage ?? "" ,matching_skills:skill_response.matching_skills ?? [] , missing_skills:skill_response.missing_skills ?? [],
+        feedback:skill_response.feedback ?? ""
+         },
+    })
+
+    console.log(skill_data)
+    return res.status(200).json({
+      message:skill_data
+    })
+  } catch (error) {
+    console.error("Error getting the skill analysis from the AI model , Try again later!!", error);
+    return [];
+  }
+
+};
+
+function formatResume(resume: any): string {
+  let output = `Name: ${resume.Name}\n\n`;
+
+  output += `Education:\n`;
+  resume.Education.forEach((edu: any) => {
+    output += `- ${edu.degree} from ${edu.school} (${edu.duration}), Details: ${edu.details}\n`;
+  });
+
+  output += `\nExperience:\n`;
+  resume.Experience.forEach((exp: any) => {
+    output += `- ${exp.title} at ${exp.company} (${exp.duration})\n`;
+    exp.keyPoints.forEach((point: string) => {
+      output += `   • ${point}\n`;
+    });
+  });
+
+  output += `\nProjects:\n`;
+  resume.Projects.forEach((proj: any) => {
+    output += `- ${proj.name}: ${proj.description}\n  Tech: ${proj.technologies.join(', ')}\n`;
+  });
+
+  output += `\nSkills:\n`;
+  output += `- Databases: ${resume.Skills.databases.join(', ')}\n`;
+  output += `- Areas of Interest: ${resume.Skills.areasOfInterest.join(', ')}\n`;
+  output += `- Frameworks/Tools: ${resume.Skills.frameworksAndTools.join(', ')}\n`;
+  output += `- Programming Languages: ${resume.Skills.programmingLanguages.join(', ')}\n`;
+//  console.log(output)
+  return output;
+}
+
+
+
+
+const call_deepseek_for_skill_gap = async (prompt: string): Promise<any> => {
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${Deepseek}`,
+         "HTTP-Referer": "",
+        "X-Title": "",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        // model: "gpt-4",
+        model: "deepseek/deepseek-r1:free",
+        messages: [{ role: "user", content: prompt }],
+        // temperature:0.7
+      }),
+    });
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || "";
+  } catch (error:any) {
+    console.error("Error calling DeepSeek API:", error);
+    return error.status(500).json({
+      message:"Failed to fetch data from DeepSeek API"
+    })
+  }
+};
+
+app.post("/skill_analysis",SkillGap)
 
 
 
