@@ -13,37 +13,38 @@ exports.atsresolver = exports.callOpenAI_for_parsing_resume = void 0;
 exports.convertResumeJSONToText = convertResumeJSONToText;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
-const DeepSeek = process.env.DEEPSEEK_API_KEY;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+// const Gemini=process.env.GEMINI_API_KEY;
+// const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const callOpenAI_for_parsing_resume = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c;
     try {
-        const response = yield fetch("https://openrouter.ai/api/v1/chat/completions", {
+        const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent", {
             method: "POST",
             headers: {
-                Authorization: `Bearer ${DeepSeek}`,
-                "HTTP-Referer": "",
-                "X-Title": "",
+                "x-goog-api-key": process.env.GEMINI_API_KEY || "",
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                // model: "gpt-4", // or "gpt-3.5-turbo" for cheaper/faster option
-                model: "deepseek/deepseek-r1:free",
-                messages: [{ role: "user", content: prompt }],
-                // temperature: 0.7,
+                contents: [
+                    {
+                        role: "user",
+                        parts: [{ text: prompt }],
+                    },
+                ],
             }),
         });
         const data = yield response.json();
-        // ✅ Add safe check to prevent crash
-        if (!data.choices || !((_b = (_a = data.choices[0]) === null || _a === void 0 ? void 0 : _a.message) === null || _b === void 0 ? void 0 : _b.content)) {
-            console.error("Invalid OpenAI response:", data);
-            throw new Error("OpenAI API returned an unexpected response format.");
+        console.log(data);
+        // ✅ Gemini response format check
+        if (!data.candidates || !((_c = (_b = (_a = data.candidates[0]) === null || _a === void 0 ? void 0 : _a.content) === null || _b === void 0 ? void 0 : _b.parts[0]) === null || _c === void 0 ? void 0 : _c.text)) {
+            console.error("Invalid Gemini response:", data);
+            throw new Error("Gemini API returned an unexpected response format.");
         }
-        return data.choices[0].message.content;
+        return data.candidates[0].content.parts[0].text;
     }
     catch (error) {
-        console.error("Error calling OpenAI API:", error);
-        throw new Error("Failed to fetch data from OpenAI API");
+        console.error("Error calling Gemini Pro API:", error);
+        throw new Error("Failed to fetch data from Gemini Pro API");
     }
 });
 exports.callOpenAI_for_parsing_resume = callOpenAI_for_parsing_resume;

@@ -148,32 +148,38 @@ if (!userExists) {
 
 
 // now cleaning the resume data by calling the deepseek function 
-const Deepseek=process.env.DEEPSEEK_API_KEY;
+const Gemini=process.env.GEMINI_API_KEY;
 // DeepSeek API call function
 const callDeepSeek_for_parsing_resume = async (prompt: string): Promise<any> => {
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${Deepseek}`,
-        "HTTP-Referer": "",
-        "X-Title": "",
+         "x-goog-api-key": process.env.GEMINI_API_KEY || "",  // 👈 Use your Gemini Pro key
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-r1:free",
-        // model:"o3-mini",
-        messages: [{ role: "user", content: prompt }],
-        // temperature:0.7
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }],
+          },
+        ],
       }),
     });
 
     const data = await response.json();
-    console.log(data);
-    return data.choices[0].message.content;
+
+    // ✅ Gemini response format check
+    if (!data.candidates || !data.candidates[0]?.content?.parts[0]?.text) {
+      console.error("Invalid Gemini response:", data);
+      throw new Error("Gemini API returned an unexpected response format.");
+    }
+
+    return data.candidates[0].content.parts[0].text;
   } catch (error) {
-    console.error("Error calling DeepSeek API:", error);
-    throw new Error("Failed to fetch data from DeepSeek API");
+    console.error("Error calling Gemini Pro API:", error);
+    throw new Error("Failed to fetch data from Gemini Pro API");
   }
 };
 
@@ -269,32 +275,36 @@ Keep the tone professional yet enthusiastic. Provide clean output only (no expla
 
 
 
-const call_deepseek_for_cover_letter = async (prompt:string):Promise<any> => {
+const call_deepseek_for_cover_letter = async (prompt: string): Promise<string> => {
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${Deepseek}`,
-        "HTTP-Referer": "",
-        "X-Title": "",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        // model: "openai/o3-pro",
-        model: "deepseek/deepseek-r1:free",
-        messages: [{ role: "user", content: prompt }],
-        // temperature:0.7
-      }),
-    });
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+      {
+        method: "POST",
+        headers: {
+         "x-goog-api-key": process.env.GEMINI_API_KEY || "",  // 👈 use your Gemini API key
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: prompt }],
+            },
+          ],
+        }),
+      }
+    );
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || "";
+
+    // ✅ Safe check for Gemini response
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
   } catch (error) {
-    console.error("Error calling DeepSeek API:", error);
-    throw new Error("Failed to fetch data from DeepSeek API");
+    console.error("Error calling Gemini API:", error);
+    throw new Error("Failed to fetch data from Gemini API");
   }
 };
-
 
 
 
@@ -377,29 +387,32 @@ Return only the cold email body text with no extra notes or markdown formatting.
 
 
 
-const call_deepseek_for_cold_email = async (prompt: string): Promise<any> => {
+const call_deepseek_for_cold_email = async (prompt: string): Promise<string> => {
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${Deepseek}`,
-         "HTTP-Referer": "",
-        "X-Title": "",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        // model: "gpt-4",
-        model: "deepseek/deepseek-r1:free",
-        messages: [{ role: "user", content: prompt }],
-        // temperature:0.7
-      }),
-    });
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "x-goog-api-key": process.env.GEMINI_API_KEY || "", // 👈 Your Gemini key
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: prompt }],
+            },
+          ],
+        }),
+      }
+    );
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || "";
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
   } catch (error) {
-    console.error("Error calling DeepSeek API:", error);
-    throw new Error("Failed to fetch data from DeepSeek API");
+    console.error("Error calling Gemini API (Cold Email):", error);
+    throw new Error("Failed to fetch data from Gemini API (Cold Email)");
   }
 };
 
@@ -710,31 +723,32 @@ function formatResume(resume: any): string {
 
 
 
-const call_deepseek_for_skill_gap = async (prompt: string): Promise<any> => {
+const call_deepseek_for_skill_gap = async (prompt: string): Promise<string> => {
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${Deepseek}`,
-         "HTTP-Referer": "",
-        "X-Title": "",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        // model: "gpt-4",
-        model: "deepseek/deepseek-r1:free",
-        messages: [{ role: "user", content: prompt }],
-        // temperature:0.7
-      }),
-    });
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "x-goog-api-key": process.env.GEMINI_API_KEY || "",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: prompt }],
+            },
+          ],
+        }),
+      }
+    );
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || "";
-  } catch (error:any) {
-    console.error("Error calling DeepSeek API:", error);
-    return error.status(500).json({
-      message:"Failed to fetch data from DeepSeek API"
-    })
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  } catch (error) {
+    console.error("Error calling Gemini API (Skill Gap):", error);
+    throw new Error("Failed to fetch data from Gemini API (Skill Gap)");
   }
 };
 
