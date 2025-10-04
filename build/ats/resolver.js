@@ -18,7 +18,7 @@ const prisma = new client_1.PrismaClient();
 const callOpenAI_for_parsing_resume = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     try {
-        const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent", {
+        const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent", {
             method: "POST",
             headers: {
                 "x-goog-api-key": process.env.GEMINI_API_KEY || "",

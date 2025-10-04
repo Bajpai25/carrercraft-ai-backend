@@ -128,7 +128,7 @@ const Gemini = process.env.GEMINI_API_KEY;
 const callDeepSeek_for_parsing_resume = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     try {
-        const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent", {
+        const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent", {
             method: "POST",
             headers: {
                 "x-goog-api-key": process.env.GEMINI_API_KEY || "", // 👈 Use your Gemini Pro key
@@ -235,7 +235,7 @@ Keep the tone professional yet enthusiastic. Provide clean output only (no expla
 const call_deepseek_for_cover_letter = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e;
     try {
-        const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent", {
+        const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent", {
             method: "POST",
             headers: {
                 "x-goog-api-key": process.env.GEMINI_API_KEY || "", // 👈 use your Gemini API key
@@ -327,7 +327,7 @@ Return only the cold email body text with no extra notes or markdown formatting.
 const call_deepseek_for_cold_email = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e;
     try {
-        const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent", {
+        const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent", {
             method: "POST",
             headers: {
                 "x-goog-api-key": process.env.GEMINI_API_KEY || "", // 👈 Your Gemini key
@@ -617,7 +617,7 @@ function formatResume(resume) {
 const call_deepseek_for_skill_gap = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e;
     try {
-        const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent", {
+        const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent", {
             method: "POST",
             headers: {
                 "x-goog-api-key": process.env.GEMINI_API_KEY || "",

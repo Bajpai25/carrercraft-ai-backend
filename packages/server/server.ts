@@ -152,7 +152,7 @@ const Gemini=process.env.GEMINI_API_KEY;
 // DeepSeek API call function
 const callDeepSeek_for_parsing_resume = async (prompt: string): Promise<any> => {
   try {
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent", {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent", {
       method: "POST",
       headers: {
          "x-goog-api-key": process.env.GEMINI_API_KEY || "",  // 👈 Use your Gemini Pro key
@@ -278,7 +278,7 @@ Keep the tone professional yet enthusiastic. Provide clean output only (no expla
 const call_deepseek_for_cover_letter = async (prompt: string): Promise<string> => {
   try {
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
       {
         method: "POST",
         headers: {
@@ -390,7 +390,7 @@ Return only the cold email body text with no extra notes or markdown formatting.
 const call_deepseek_for_cold_email = async (prompt: string): Promise<string> => {
   try {
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
       {
         method: "POST",
         headers: {
@@ -726,7 +726,7 @@ function formatResume(resume: any): string {
 const call_deepseek_for_skill_gap = async (prompt: string): Promise<string> => {
   try {
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
       {
         method: "POST",
         headers: {
