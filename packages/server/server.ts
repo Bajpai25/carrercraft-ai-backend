@@ -17,7 +17,7 @@ dotenv.config();
 const prisma = new PrismaClient();
 const app = express();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const PORT=process.env.PORT;
+const PORT=process.env.PORT || 8000;
 
 // Enable CORS
 app.use(cors({
