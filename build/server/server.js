@@ -28,7 +28,7 @@ dotenv_1.default.config();
 const prisma = new client_1.PrismaClient();
 const app = (0, express_1.default)();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 8000;
 // Enable CORS
 app.use((0, cors_1.default)({
     origin: "*", // or ["http://localhost:3000", "https://yourdomain.com"]

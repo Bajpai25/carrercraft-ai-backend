@@ -1,26 +1,7 @@
-
-# FROM node:18-alpine
-
-# # Set working directory in container
-# WORKDIR /app
-
-# # First copy package files and install
-# COPY package*.json .
-
-# RUN npm ci
-
-# # Then copy the rest of your application
-# COPY . .
-
-# # # Generate Prisma Client
-# # RUN npx prisma generate
-
-# # # Command to start your server
-# # CMD [ "npm run dev" ]
-
-# Use the correct version of Playwright that matches your installed version
+# Use Playwright image
 FROM mcr.microsoft.com/playwright:v1.53.1-jammy
 
+# Set working directory
 WORKDIR /app
 
 # Install dependencies
@@ -30,8 +11,25 @@ RUN npm ci
 # Copy the rest of the project
 COPY . .
 
-# Make the entrypoint script executable
-RUN chmod +x entrypoint.sh
+# Set environment variable for PORT
+ENV PORT=8000
 
+# Expose the port
+EXPOSE $PORT
 
-ENTRYPOINT ["./entrypoint.sh"]
+# Build-time tasks: Prisma client generation & migrations
+RUN echo "🔹 Generating Prisma client..." \
+    && npx prisma generate \
+    && echo "🔹 Running Prisma migrations..." \
+    && npx prisma migrate deploy \
+    && echo "🔹 Building server..." \
+    && npm run build
+
+# Wait for Supabase DB (transaction pooler) to be ready, then start server
+CMD echo "🔹 Waiting for database..." \
+    && until nc -zv $DB_HOST $DB_PORT; do \
+         echo "Database not ready, retrying in 2s..."; \
+         sleep 2; \
+       done \
+    && echo "✅ Database reachable. Starting server on port $PORT..." \
+    && npm run start
