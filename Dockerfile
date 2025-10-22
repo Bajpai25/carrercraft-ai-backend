@@ -33,7 +33,5 @@ COPY . .
 # Make the entrypoint script executable
 RUN chmod +x entrypoint.sh
 
-# Expose a port (optional, Render uses $PORT dynamically)
-EXPOSE 8000
 
 ENTRYPOINT ["./entrypoint.sh"]
