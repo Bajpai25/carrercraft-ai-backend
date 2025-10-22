@@ -18,6 +18,7 @@
     "@google/genai": "^1.20.0",
     "@prisma/client": "^6.4.1",
     "apollo-server-express": "^3.13.0",
+    "bson": "^6.10.4",
     "cloudinary": "^2.6.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

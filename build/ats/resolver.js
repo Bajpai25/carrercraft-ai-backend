@@ -9,13 +9,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.atsresolver = exports.callOpenAI_for_parsing_resume = void 0;
+exports.atsresolver = exports.callGemini_for_parsing_resume = void 0;
 exports.convertResumeJSONToText = convertResumeJSONToText;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 // const Gemini=process.env.GEMINI_API_KEY;
 // const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const callOpenAI_for_parsing_resume = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
+const callGemini_for_parsing_resume = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     try {
         const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent", {
@@ -47,7 +47,7 @@ const callOpenAI_for_parsing_resume = (prompt) => __awaiter(void 0, void 0, void
         throw new Error("Failed to fetch data from Gemini Pro API");
     }
 });
-exports.callOpenAI_for_parsing_resume = callOpenAI_for_parsing_resume;
+exports.callGemini_for_parsing_resume = callGemini_for_parsing_resume;
 function convertResumeJSONToText(json) {
     const lines = [];
     // Name
@@ -154,8 +154,8 @@ Resume:
 """
 ${resumeText}
 """`;
-            // const rawAnalysis = await callDeepSeek_for_parsing_resume(prompt);
-            const rawAnalysis = yield (0, exports.callOpenAI_for_parsing_resume)(prompt);
+            // const rawAnalysis = await callGemini_for_parsing_resume(prompt);
+            const rawAnalysis = yield (0, exports.callGemini_for_parsing_resume)(prompt);
             if (!rawAnalysis) {
                 throw new Error("Failed to analyze the resume");
             }

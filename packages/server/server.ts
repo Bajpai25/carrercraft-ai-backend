@@ -105,7 +105,7 @@ Format:
 Resume:${data.text}
 `;
 
-    const response = await callDeepSeek_for_parsing_resume(prompt);
+    const response = await callGemini_for_parsing_resume(prompt);
 
     let cleanedResponse = response.trim();
     if (cleanedResponse.startsWith("```")) {
@@ -133,7 +133,7 @@ if (!userExists) {
       data: {
         fileUrl: (uploadedResponse as any).secure_url,
         userId,
-        resume_data: parsedResumeData, // Ensure `parsedData` is a JSON field in your Prisma model
+        resume_data: parsedResumeData, // Ensure `parsedData` is a JSON field in Prisma model
       },
     });
 
@@ -150,12 +150,12 @@ if (!userExists) {
 // now cleaning the resume data by calling the deepseek function 
 const Gemini=process.env.GEMINI_API_KEY;
 // DeepSeek API call function
-const callDeepSeek_for_parsing_resume = async (prompt: string): Promise<any> => {
+const callGemini_for_parsing_resume = async (prompt: string): Promise<any> => {
   try {
     const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent", {
       method: "POST",
       headers: {
-         "x-goog-api-key": process.env.GEMINI_API_KEY || "",  // 👈 Use your Gemini Pro key
+         "x-goog-api-key": process.env.GEMINI_API_KEY || "",  //  Use your Gemini Pro key
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -247,7 +247,7 @@ Also give a relevant suitable small title to it as well in the title field.
 Keep the tone professional yet enthusiastic. Provide clean output only (no explanations).
 `;
 
-    const response = await call_deepseek_for_cover_letter(prompt);
+    const response = await gemini_for_cover_letter(prompt);
     let cleanedResponse = response.trim();
     cleanedResponse = cleanedResponse.replace(/```json|```|###|\*\*/g, "").trim();
 
@@ -275,7 +275,7 @@ Keep the tone professional yet enthusiastic. Provide clean output only (no expla
 
 
 
-const call_deepseek_for_cover_letter = async (prompt: string): Promise<string> => {
+const gemini_for_cover_letter = async (prompt: string): Promise<string> => {
   try {
     const response = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
@@ -365,7 +365,7 @@ Also give a relevant suitable small title to it as well in the title field.
 Return only the cold email body text with no extra notes or markdown formatting.
 `;
 
-    const response = await call_deepseek_for_cold_email(prompt);
+    const response = await gemini_for_cold_email(prompt);
 
     let cleanedResponse = response.trim();
     cleanedResponse = cleanedResponse.replace(/```json|```|###|\*\*/g, "").trim();
@@ -387,7 +387,7 @@ Return only the cold email body text with no extra notes or markdown formatting.
 
 
 
-const call_deepseek_for_cold_email = async (prompt: string): Promise<string> => {
+const gemini_for_cold_email = async (prompt: string): Promise<string> => {
   try {
     const response = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
@@ -494,7 +494,7 @@ const extractSkillsFromJobDescription = async (description: string): Promise<str
   `;
 
   try {
-    const response = await callDeepSeek_for_parsing_resume(prompt);
+    const response = await callGemini_for_parsing_resume(prompt);
     let cleanedResponse = response.trim();
     
     // Remove any markdown formatting if present
@@ -522,7 +522,7 @@ const extractSkillsFromResume = async (resumeText: string): Promise<string[]> =>
   `;
 
   try {
-    const response = await callDeepSeek_for_parsing_resume(prompt);
+    const response = await callGemini_for_parsing_resume(prompt);
     let cleanedResponse = response.trim();
     
     // Remove any markdown formatting if present
@@ -661,7 +661,7 @@ ${formattedResume}
 `;
 
   try {
-    const response = await call_deepseek_for_skill_gap(prompt);
+    const response = await gemini_for_skill_gap(prompt);
     let cleanedResponse = response.trim();
     
     // Remove any markdown formatting if present
@@ -723,7 +723,7 @@ function formatResume(resume: any): string {
 
 
 
-const call_deepseek_for_skill_gap = async (prompt: string): Promise<string> => {
+const gemini_for_skill_gap = async (prompt: string): Promise<string> => {
   try {
     const response = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",

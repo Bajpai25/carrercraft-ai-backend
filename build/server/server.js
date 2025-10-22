@@ -88,7 +88,7 @@ Format:
   "PositionsOfResponsibility": [{ "title": "", "role": "", "organization": "", "duration": "", "description": "" }]}
 Resume:${data.text}
 `;
-        const response = yield callDeepSeek_for_parsing_resume(prompt);
+        const response = yield callGemini_for_parsing_resume(prompt);
         let cleanedResponse = response.trim();
         if (cleanedResponse.startsWith("```")) {
             cleanedResponse = cleanedResponse.replace(/```json|```/g, "").trim();
@@ -112,7 +112,7 @@ Resume:${data.text}
             data: {
                 fileUrl: uploadedResponse.secure_url,
                 userId,
-                resume_data: parsedResumeData, // Ensure `parsedData` is a JSON field in your Prisma model
+                resume_data: parsedResumeData, // Ensure `parsedData` is a JSON field in Prisma model
             },
         });
         return res.status(200).json({ message: "Resume uploaded and parsed successfully", resume: savedResume });
@@ -125,13 +125,13 @@ Resume:${data.text}
 // now cleaning the resume data by calling the deepseek function 
 const Gemini = process.env.GEMINI_API_KEY;
 // DeepSeek API call function
-const callDeepSeek_for_parsing_resume = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
+const callGemini_for_parsing_resume = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     try {
         const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent", {
             method: "POST",
             headers: {
-                "x-goog-api-key": process.env.GEMINI_API_KEY || "", // 👈 Use your Gemini Pro key
+                "x-goog-api-key": process.env.GEMINI_API_KEY || "", //  Use your Gemini Pro key
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -210,7 +210,7 @@ Also give a relevant suitable small title to it as well in the title field.
 
 Keep the tone professional yet enthusiastic. Provide clean output only (no explanations).
 `;
-        const response = yield call_deepseek_for_cover_letter(prompt);
+        const response = yield gemini_for_cover_letter(prompt);
         let cleanedResponse = response.trim();
         cleanedResponse = cleanedResponse.replace(/```json|```|###|\*\*/g, "").trim();
         const lines = cleanedResponse.split("\n");
@@ -232,7 +232,7 @@ Keep the tone professional yet enthusiastic. Provide clean output only (no expla
         return res.status(500).json({ error: "Internal server error" });
     }
 }));
-const call_deepseek_for_cover_letter = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
+const gemini_for_cover_letter = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e;
     try {
         const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent", {
@@ -307,7 +307,7 @@ Also give a relevant suitable small title to it as well in the title field.
 
 Return only the cold email body text with no extra notes or markdown formatting.
 `;
-        const response = yield call_deepseek_for_cold_email(prompt);
+        const response = yield gemini_for_cold_email(prompt);
         let cleanedResponse = response.trim();
         cleanedResponse = cleanedResponse.replace(/```json|```|###|\*\*/g, "").trim();
         const coldEmail = yield prisma.coldEmail.create({
@@ -324,7 +324,7 @@ Return only the cold email body text with no extra notes or markdown formatting.
         return res.status(500).json({ error: "Internal server error" });
     }
 }));
-const call_deepseek_for_cold_email = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
+const gemini_for_cold_email = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e;
     try {
         const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent", {
@@ -418,7 +418,7 @@ const extractSkillsFromJobDescription = (description) => __awaiter(void 0, void 
     """${description}"""
   `;
     try {
-        const response = yield callDeepSeek_for_parsing_resume(prompt);
+        const response = yield callGemini_for_parsing_resume(prompt);
         let cleanedResponse = response.trim();
         // Remove any markdown formatting if present
         if (cleanedResponse.startsWith("```")) {
@@ -443,7 +443,7 @@ const extractSkillsFromResume = (resumeText) => __awaiter(void 0, void 0, void 0
     """${resumeText}"""
   `;
     try {
-        const response = yield callDeepSeek_for_parsing_resume(prompt);
+        const response = yield callGemini_for_parsing_resume(prompt);
         let cleanedResponse = response.trim();
         // Remove any markdown formatting if present
         if (cleanedResponse.startsWith("```")) {
@@ -566,7 +566,7 @@ ${formattedResume}
 """
 `;
     try {
-        const response = yield call_deepseek_for_skill_gap(prompt);
+        const response = yield gemini_for_skill_gap(prompt);
         let cleanedResponse = response.trim();
         // Remove any markdown formatting if present
         if (cleanedResponse.startsWith("```")) {
@@ -614,7 +614,7 @@ function formatResume(resume) {
     //  console.log(output)
     return output;
 }
-const call_deepseek_for_skill_gap = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
+const gemini_for_skill_gap = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e;
     try {
         const response = yield fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent", {

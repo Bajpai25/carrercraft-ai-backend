@@ -55,7 +55,7 @@ export type ResumeJSON = {
 // const Gemini=process.env.GEMINI_API_KEY;
 // const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-export const callOpenAI_for_parsing_resume = async (prompt: string): Promise<string> => {
+export const callGemini_for_parsing_resume = async (prompt: string): Promise<string> => {
   try {
     const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent", {
       method: "POST",
@@ -209,8 +209,8 @@ Resume:
 """
 ${resumeText}
 """`
-                // const rawAnalysis = await callDeepSeek_for_parsing_resume(prompt);
-                const rawAnalysis=await callOpenAI_for_parsing_resume(prompt);
+                // const rawAnalysis = await callGemini_for_parsing_resume(prompt);
+                const rawAnalysis=await callGemini_for_parsing_resume(prompt);
 
                 if(!rawAnalysis){
                     throw new Error("Failed to analyze the resume");
