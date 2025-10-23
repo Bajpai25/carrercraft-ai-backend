@@ -17,7 +17,6 @@ dotenv.config();
 const prisma = new PrismaClient();
 const app = express();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const PORT=process.env.PORT || 8000;
 
 // Enable CORS
 app.use(cors({
@@ -764,8 +763,8 @@ const init = async () => {
   await server.start();
   server.applyMiddleware({ app });
 
-  app.listen(PORT, () => {
-    console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
+  app.listen(8000, () => {
+    console.log(`🚀 Server ready at http://localhost:8000${server.graphqlPath}`);
   });
 };
 
