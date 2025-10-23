@@ -17,6 +17,7 @@ dotenv.config();
 const prisma = new PrismaClient();
 const app = express();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const PORT = Number(process.env.PORT) || 8000
 
 // Enable CORS
 app.use(cors({
@@ -759,13 +760,17 @@ app.post("/skill_analysis",SkillGap)
 
 // ✅ Start Apollo GraphQL Server
 const init = async () => {
-  const server = new ApolloServer({ typeDefs, resolvers });
-  await server.start();
-  server.applyMiddleware({ app });
+  const server = new ApolloServer({ typeDefs, resolvers });
+  await server.start();
+  server.applyMiddleware({ app });
 
-  app.listen(8000, () => {
-    console.log(`🚀 Server ready at http://localhost:8000${server.graphqlPath}`);
-  });
+  // Use the PORT variable you defined at the top
+  const host = '0.0.0.0'; // <-- Add this
+  
+  // Use PORT and host variables here
+  app.listen(PORT, host, () => {
+    console.log(`🚀 Server ready at http://${host}:${PORT}${server.graphqlPath}`);
+  });
 };
 
 init();

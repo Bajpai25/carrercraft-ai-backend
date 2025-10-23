@@ -28,7 +28,7 @@ dotenv_1.default.config();
 const prisma = new client_1.PrismaClient();
 const app = (0, express_1.default)();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const PORT = process.env.PORT || 8000;
+const PORT = Number(process.env.PORT) || 8000;
 // Enable CORS
 app.use((0, cors_1.default)({
     origin: "*", // or ["http://localhost:3000", "https://yourdomain.com"]
@@ -647,8 +647,11 @@ const init = () => __awaiter(void 0, void 0, void 0, function* () {
     const server = new apollo_server_express_1.ApolloServer({ typeDefs: combine_1.typeDefs, resolvers: combine_1.resolvers });
     yield server.start();
     server.applyMiddleware({ app });
-    app.listen(PORT, () => {
-        console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
+    // Use the PORT variable you defined at the top
+    const host = '0.0.0.0'; // <-- Add this
+    // Use PORT and host variables here
+    app.listen(PORT, host, () => {
+        console.log(`🚀 Server ready at http://${host}:${PORT}${server.graphqlPath}`);
     });
 });
 init();

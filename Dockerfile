@@ -64,6 +64,7 @@ COPY . .
 # Make the entrypoint script executable
 RUN chmod +x entrypoint.sh
 
+ENV PORT 8000
 EXPOSE 8000
 
 ENTRYPOINT ["./entrypoint.sh"]
