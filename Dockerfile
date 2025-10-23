@@ -4,6 +4,10 @@ FROM mcr.microsoft.com/playwright:v1.53.1-jammy
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
+
+# install netcat
+RUN apt-get update && apt-get install -y netcat && apt-get clean
+
 COPY . .
 
 ENV PORT=8000
