@@ -1,28 +1,14 @@
-# Use Playwright image
+# Dockerfile
 FROM mcr.microsoft.com/playwright:v1.53.1-jammy
-
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
-
-# install netcat
 RUN apt-get update && apt-get install -y netcat && apt-get clean
-
 COPY . .
-
+RUN npx prisma generate
+RUN npm run build
 ENV PORT=8000
 EXPOSE $PORT
-
-RUN echo "🔹 Generating Prisma client..." && npx prisma generate
-RUN echo "🔹 Building server..." && npm run build
-
-# Move migrations to runtime (after Render injects env vars)
-CMD echo "Waiting for database..." \
-    && until nc -zv $DB_HOST $DB_PORT; do \
-         echo "Database not ready, retrying in 2s..."; \
-         sleep 2; \
-       done \
-    && echo "Running Prisma migrations..." \
-    && npx prisma migrate deploy \
-    && echo "Starting server on port $PORT..." \
-    && npm run start
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+CMD ["/entrypoint.sh"]
