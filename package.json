@@ -10,6 +10,9 @@
     "dev": "tsc-watch --onSuccess  \" npm start\"",
     "codegen": "graphql-codegen --config codegen.yml"
   },
+  "engines": {
+    "node": "20.10.0"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
