@@ -47,6 +47,13 @@ app.use(express.urlencoded({ extended: true }));
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
+
+// create a health endpoint for constanly hitting the render backend so it keeps on hitting it so that it won't sleep
+
+app.use("/health", (req, res) => {
+  res.status(200).json({ message: "Server is healthy!" });
+})
+
 // ✅ REST API: File Upload Endpoint
 app.post("/upload-parse-resume", upload.single("file"), async (req, res) => {
   try {
